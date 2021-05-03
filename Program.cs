@@ -10,13 +10,13 @@ namespace ZadanieRekrutacyjne
             //Wejście
             int meeting_duration = 30;
 
-            Calendar.working_hours workig_hours1 = new Calendar.working_hours();
-            workig_hours1.start = workig_hours1.start.AddHours(7).AddMinutes(0);
-            workig_hours1.end = workig_hours1.end.AddHours(19).AddMinutes(55);
+            Calendar.working_hours working_hours1 = new Calendar.working_hours();
+            working_hours1.start = working_hours1.start.AddHours(8).AddMinutes(0);
+            working_hours1.end = working_hours1.end.AddHours(19).AddMinutes(55);
 
-            Calendar.working_hours workig_hours2 = new Calendar.working_hours();
-            workig_hours2.start = workig_hours2.start.AddHours(9).AddMinutes(0);
-            workig_hours2.end = workig_hours2.end.AddHours(18).AddMinutes(30);
+            Calendar.working_hours working_hours2 = new Calendar.working_hours();
+            working_hours2.start = working_hours2.start.AddHours(10).AddMinutes(0);
+            working_hours2.end = working_hours2.end.AddHours(18).AddMinutes(30);
 
             //Planowane Spotkania - Kalendarz1
             Calendar.planned_meeting planned_meeting1 = new Calendar.planned_meeting();
@@ -45,31 +45,34 @@ namespace ZadanieRekrutacyjne
             planned_meeting2.end.Add(new DateTime().AddHours(17).AddMinutes(0));
             //Algorytm
             Calendar.working_hours working_hours_merge = new Calendar.working_hours();
-            if (workig_hours1.start.CompareTo(workig_hours2.start) > 0)
+            if (working_hours1.start.CompareTo(working_hours2.start) > 0)
             {
-                working_hours_merge.start = working_hours_merge.start.AddHours(get_hours(workig_hours1.start.ToString("HH:mm"))).AddMinutes(get_minutes(workig_hours1.start.ToString("HH:mm")));
+                working_hours_merge.start = working_hours_merge.start.AddHours(get_hours(working_hours1.start.ToString("HH:mm"))).AddMinutes(get_minutes(working_hours1.start.ToString("HH:mm")));
             }
             else
             {
-                working_hours_merge.start = working_hours_merge.start.AddHours(get_hours(workig_hours2.start.ToString("HH:mm"))).AddMinutes(get_minutes(workig_hours2.start.ToString("HH:mm")));
+                working_hours_merge.start = working_hours_merge.start.AddHours(get_hours(working_hours2.start.ToString("HH:mm"))).AddMinutes(get_minutes(working_hours2.start.ToString("HH:mm")));
             }
-            if (workig_hours1.end.CompareTo(workig_hours2.end) < 0)
+            if (working_hours1.end.CompareTo(working_hours2.end) < 0)
             {
-                working_hours_merge.end = working_hours_merge.end.AddHours(get_hours(workig_hours1.end.ToString("HH:mm"))).AddMinutes(get_minutes(workig_hours1.end.ToString("HH:mm")));
+                working_hours_merge.end = working_hours_merge.end.AddHours(get_hours(working_hours1.end.ToString("HH:mm"))).AddMinutes(get_minutes(working_hours1.end.ToString("HH:mm")));
             }
             else
             {
-                working_hours_merge.end = working_hours_merge.end.AddHours(get_hours(workig_hours2.end.ToString("HH:mm"))).AddMinutes(get_minutes(workig_hours2.end.ToString("HH:mm")));
+                working_hours_merge.end = working_hours_merge.end.AddHours(get_hours(working_hours2.end.ToString("HH:mm"))).AddMinutes(get_minutes(working_hours2.end.ToString("HH:mm")));
             }
             var merged_calendar = get_merged_calendar(planned_meeting1, planned_meeting2);
             var normalized_calendar = get_optimized_calendar(merged_calendar);
             var adjusted_calendar = get_working_hours(normalized_calendar, working_hours_merge);
-            var availablse_slots = get_available_time_slots(adjusted_calendar, meeting_duration);
+            var available_slots = get_available_time_slots(adjusted_calendar, meeting_duration);
             //Wyjscie
-            for (int i = 0; i < availablse_slots.start.Count; ++i)
+            if (available_slots.start.Count == 0)
             {
-                Console.WriteLine(availablse_slots.start[i].ToString("HH:mm") + " - " + availablse_slots.end[i].ToString("HH:mm"));
-
+                Console.WriteLine("Brak wolnych slotów czasowych");
+            }
+            for (int i = 0; i < available_slots.start.Count; ++i)
+            {
+                Console.WriteLine(available_slots.start[i].ToString("HH:mm") + " - " + available_slots.end[i].ToString("HH:mm"));
             }
             Console.ReadLine();
         }
@@ -106,6 +109,7 @@ namespace ZadanieRekrutacyjne
             }
             return 0;
         }
+        // Zakładam że oba kalendarze są posortowane chronologicznie
         public static Calendar.planned_meeting get_merged_calendar(Calendar.planned_meeting planned_meeting1, Calendar.planned_meeting planned_meeting2)
         {
             Calendar.planned_meeting planned_meeting_merge = new Calendar.planned_meeting();
@@ -203,63 +207,61 @@ namespace ZadanieRekrutacyjne
             }
             return planned_meeting;
         }
-        public static Calendar.planned_meeting get_working_hours(Calendar.planned_meeting original_calendar, Calendar.working_hours working_hours)
+        public static Calendar.planned_meeting get_working_hours(Calendar.planned_meeting calendar, Calendar.working_hours working_hours)
         {
-            var pom1_start = original_calendar.start[0];
+            var pom1_start = calendar.start[0];
             var start_time = pom1_start;
-            var pom2_end = original_calendar.end[original_calendar.end.Count - 1];
+            var pom2_end = calendar.end[calendar.end.Count - 1];
             var end_time = pom2_end;
             if (compare_times(start_time.ToString("HH:mm"), working_hours.start.ToString("HH:mm")) == -1)
             {
                 int i = 0;
-                while (i < original_calendar.start.Count)
+                while (i < calendar.start.Count)
                 {
-                    if (compare_times(original_calendar.end[i].ToString("HH:mm"), working_hours.start.ToString("HH:mm")) == -1)
+                    if (compare_times(calendar.end[i].ToString("HH:mm"), working_hours.start.ToString("HH:mm")) == -1)
                     {
-                        original_calendar.start.RemoveAt(i);
-                        original_calendar.end.RemoveAt(i);
+                        calendar.start.RemoveAt(i);
+                        calendar.end.RemoveAt(i);
                     }
-                    else i++;
+                    else break;
                 }
             }
             if (compare_times(end_time.ToString("HH:mm"), working_hours.end.ToString("HH:mm")) != -1)
             {
-                int i = original_calendar.start.Count - 1;
+                int i = calendar.start.Count - 1;
                 while (i >= 0)
                 {
-                    if (compare_times(original_calendar.start[i].ToString("HH:mm"), working_hours.end.ToString("HH:mm")) != -1)
+                    if (compare_times(calendar.start[i].ToString("HH:mm"), working_hours.end.ToString("HH:mm")) != -1)
                     {
-                        original_calendar.end.RemoveAt(i);
-                        original_calendar.start.RemoveAt(i);
+                        calendar.end.RemoveAt(i);
+                        calendar.start.RemoveAt(i);
                     }
                     i--;
                 }
-            }
-            if (compare_times(original_calendar.start[0].ToString("HH:mm"), working_hours.start.ToString("HH:mm")) == -1)
+            }           
+            if (calendar.start.Count > 0 && compare_times(calendar.start[0].ToString("HH:mm"), working_hours.start.ToString("HH:mm")) == -1)
             {
-                original_calendar.start[0] = working_hours.start;
-
+                calendar.start[0] = working_hours.start;
             }
             if (compare_times(end_time.ToString("HH:mm"), working_hours.end.ToString("HH:mm")) == -1)
             {
-                original_calendar.start.Add(working_hours.end);
-                original_calendar.end.Add(new DateTime().AddHours(23).AddMinutes(59));
-
-                int i = original_calendar.start.Count - 1;
+                calendar.start.Add(working_hours.end);
+                calendar.end.Add(new DateTime().AddHours(23).AddMinutes(59));
+                int i = calendar.start.Count - 1;
                 while (i >= 1)
                 {
-                    if (compare_times(original_calendar.end[i].ToString("HH:mm"), original_calendar.start[i].ToString("HH:mm")) == -1)
+                    if (compare_times(calendar.end[i].ToString("HH:mm"), calendar.start[i].ToString("HH:mm")) == -1)
                     {
-                        original_calendar.end[i] = original_calendar.end[i - 1];
+                        calendar.end[i] = calendar.end[i - 1];
                     }
                     i--;
                 }
             }
-            else if (compare_times(original_calendar.end[original_calendar.start.Count - 1].ToString("HH:mm"), working_hours.start.ToString("HH:mm")) != -1)
+            else if (calendar.start.Count > 0 && compare_times(calendar.end[calendar.start.Count - 1].ToString("HH:mm"), working_hours.end.ToString("HH:mm")) != -1)
             {
-                original_calendar.end[original_calendar.start.Count - 1] = working_hours.end;
+                calendar.end[calendar.start.Count - 1] = working_hours.end;
             }
-            return original_calendar;
+            return calendar;
         }
     }
 }
